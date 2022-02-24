@@ -9270,9 +9270,6 @@ _022339C6:
 	lsl r0, r0, #0x10
 	ldr r1, [sp]
 	lsr r0, r0, #0x10
-	rsbs r1, r3, #0 ; trying r2 as placeholder value
-	str r1, [r2, #4]
-	ldr r1, [r2, #4]
 	cmp r1, #0 ; r1 is exp value 
 	beq _02233A3E
 	lsr r4, r0, #1

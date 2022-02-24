@@ -2502,6 +2502,8 @@ struct BoxPokemon * FUN_020690E4(struct Pokemon * pokemon)
 //     return FALSE;
 // }
 
+// checks if pokemon can level DOWN and returns true if it can
+// currently implemented so it happens when it gains enough exp to level up
 BOOL FUN_020690E8(struct Pokemon * pokemon)
 {
     u16 species = (u16)GetMonData(pokemon, MON_DATA_SPECIES, NULL);
@@ -2509,15 +2511,25 @@ BOOL FUN_020690E8(struct Pokemon * pokemon)
     u32 exp = GetMonData(pokemon, MON_DATA_EXPERIENCE, NULL);
     u32 growthrate = (u32)GetMonBaseStat(species, BASE_GROWTH_RATE);
     u32 minexp = GetExpByGrowthRateAndLevel((int)growthrate, 1);
-    if (exp < minexp)
+    // if (exp < minexp)
+    // {
+    //     exp = minexp;
+    //     SetMonData(pokemon, MON_DATA_EXPERIENCE, &exp);
+    // }
+    // if (level < 1)
+    //     return FALSE;
+    // if (exp < GetExpByGrowthRateAndLevel((int)growthrate, level-1))
+    u32 nextlvlexp = GetExpByGrowthRateAndLevel((int)growthrate, level+2);
+    if (exp >= nextlvlexp)
     {
-        exp = minexp;
-        SetMonData(pokemon, MON_DATA_EXPERIENCE, &exp);
-    }
-    if (level < 1)
-        return FALSE;
-    if (exp < GetExpByGrowthRateAndLevel((int)growthrate, level))
-    {
+        u32 diff = exp - nextlvlexp;
+        u32 lvldown_exp = GetExpByGrowthRateAndLevel((int)growthrate, level) + diff;
+        if (lvldown_exp < minexp) {
+            lvldown_exp = minexp;
+        }
+        SetMonData(pokemon, MON_DATA_EXPERIENCE, &lvldown_exp);
+        if (level < 1)
+            return FALSE;
         SetMonData(pokemon, MON_DATA_LEVEL, &level);
         return TRUE;
     }
