@@ -2,6 +2,7 @@
 #include <cstring>
 #include "banner.h"
 #include "types.h"
+#include <strings.h>
 
 #ifdef _MSC_VER
 #define strcasecmp _stricmp
