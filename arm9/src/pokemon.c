@@ -1818,7 +1818,7 @@ int GetPersonalAttr(struct BaseStats * baseStats, enum BaseStat attr)
         ret = baseStats->catchRate;
         break;
     case BASE_EXP_YIELD:
-        ret = baseStats->expYield;
+        ret = 0;
         break;
     case BASE_HP_YIELD:
         ret = baseStats->hp_yield;

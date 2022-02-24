@@ -9316,7 +9316,7 @@ _02233A3E:
 	cmp r0, #0
 	bne _02233A5C
 	add r0, r5, #0
-	mov r1, #1
+	mov r1, #0
 	add r0, #0x9c
 	str r1, [r0]
 _02233A5C:
