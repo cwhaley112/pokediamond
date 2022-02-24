@@ -2479,21 +2479,44 @@ struct BoxPokemon * FUN_020690E4(struct Pokemon * pokemon)
     return &pokemon->box;
 }
 
+// this function checks if a pokemon can level up I need to modify it to do the opposite
+// BOOL FUN_020690E8(struct Pokemon * pokemon)
+// {
+//     u16 species = (u16)GetMonData(pokemon, MON_DATA_SPECIES, NULL);
+//     u8 level = (u8)(GetMonData(pokemon, MON_DATA_LEVEL, NULL) + 1);
+//     u32 exp = GetMonData(pokemon, MON_DATA_EXPERIENCE, NULL);
+//     u32 growthrate = (u32)GetMonBaseStat(species, BASE_GROWTH_RATE);
+//     u32 maxexp = GetExpByGrowthRateAndLevel((int)growthrate, 100);
+//     if (exp > maxexp)
+//     {
+//         exp = maxexp;
+//         SetMonData(pokemon, MON_DATA_EXPERIENCE, &exp);
+//     }
+//     if (level > 100)
+//         return FALSE;
+//     if (exp >= GetExpByGrowthRateAndLevel((int)growthrate, level))
+//     {
+//         SetMonData(pokemon, MON_DATA_LEVEL, &level);
+//         return TRUE;
+//     }
+//     return FALSE;
+// }
+
 BOOL FUN_020690E8(struct Pokemon * pokemon)
 {
     u16 species = (u16)GetMonData(pokemon, MON_DATA_SPECIES, NULL);
-    u8 level = (u8)(GetMonData(pokemon, MON_DATA_LEVEL, NULL) + 1);
+    u8 level = (u8)(GetMonData(pokemon, MON_DATA_LEVEL, NULL) - 1);
     u32 exp = GetMonData(pokemon, MON_DATA_EXPERIENCE, NULL);
     u32 growthrate = (u32)GetMonBaseStat(species, BASE_GROWTH_RATE);
-    u32 maxexp = GetExpByGrowthRateAndLevel((int)growthrate, 100);
-    if (exp > maxexp)
+    u32 minexp = GetExpByGrowthRateAndLevel((int)growthrate, 1);
+    if (exp < minexp)
     {
-        exp = maxexp;
+        exp = minexp;
         SetMonData(pokemon, MON_DATA_EXPERIENCE, &exp);
     }
-    if (level > 100)
+    if (level < 1)
         return FALSE;
-    if (exp >= GetExpByGrowthRateAndLevel((int)growthrate, level))
+    if (exp < GetExpByGrowthRateAndLevel((int)growthrate, level))
     {
         SetMonData(pokemon, MON_DATA_LEVEL, &level);
         return TRUE;
