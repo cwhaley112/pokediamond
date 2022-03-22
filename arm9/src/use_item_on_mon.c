@@ -355,7 +355,14 @@ BOOL UseItemOnPokemon(struct Pokemon * pokemon, u16 itemId, s32 moveIdx, u16 loc
         {
             if (sp58 < MAX_LEVEL)
             {
-                AddMonData(pokemon, MON_DATA_EXPERIENCE, (int)CalcMonExpToNextLevel(pokemon));
+                u16 species = (u16)GetMonData(pokemon, MON_DATA_SPECIES, NULL);
+                u32 exp = GetMonData(pokemon, MON_DATA_EXPERIENCE, NULL);
+                u32 growthrate = (u32)GetMonBaseStat(species, BASE_GROWTH_RATE);
+                u8 level = (u8)(GetMonData(pokemon, MON_DATA_LEVEL, NULL) - 1);
+                u32 newexp = GetExpByGrowthRateAndLevel((int)growthrate, level);
+
+                exp -= newexp; // amount of exp we have in excess of the level below us
+                AddMonData(pokemon, MON_DATA_EXPERIENCE, (int)exp);
                 CalcMonLevelAndStats(pokemon);
                 if (sp50 == 0)
                 {

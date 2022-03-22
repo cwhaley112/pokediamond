@@ -1504,7 +1504,7 @@ void AddBoxMonData(struct BoxPokemon * boxmon, int attr, int value)
         if (blockA->exp + value > GetMonExpBySpeciesAndLevel(blockA->species, 100))
             blockA->exp = GetMonExpBySpeciesAndLevel(blockA->species, 100);
         else
-            blockA->exp += value;
+            blockA->exp -= value;
         break;
     case MON_DATA_FRIENDSHIP:
         if (blockA->friendship + value > 255)
