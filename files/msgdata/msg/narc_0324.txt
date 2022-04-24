@@ -1,7 +1,7 @@
         
 {STRVAR_1 1, 0} gained\n{STRVAR_1 54, 1} Exp. Points!\r
 {STRVAR_1 1, 0} gained a boosted\n{STRVAR_1 54, 1} Exp. Points!\r
-{STRVAR_1 1, 0} grew to\nLv. {STRVAR_1 52, 1}!{WAIT 5}{WAIT 2}\r
+{STRVAR_1 1, 0} decreased to\nLv. {STRVAR_1 52, 1}!{WAIT 5}{WAIT 2}\r
 {STRVAR_1 1, 0} learned\n{STRVAR_1 6, 1}!{WAIT 5}{WAIT 2}\r
 {STRVAR_1 1, 0} is trying to\nlearn {STRVAR_1 6, 1}.\r
 But {STRVAR_1 1, 0} can’t learn\nmore than four moves.\r

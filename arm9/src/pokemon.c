@@ -2520,6 +2520,10 @@ BOOL FUN_020690E8(struct Pokemon * pokemon)
     //     return FALSE;
     // if (exp < GetExpByGrowthRateAndLevel((int)growthrate, level-1))
     u32 nextlvlexp = GetExpByGrowthRateAndLevel((int)growthrate, level+2);
+    if (level < 1) {
+        SetMonData(pokemon, MON_DATA_EXPERIENCE, &minexp);
+        return FALSE;
+    }
     if (exp >= nextlvlexp)
     {
         u32 diff = exp - nextlvlexp;
@@ -2528,8 +2532,6 @@ BOOL FUN_020690E8(struct Pokemon * pokemon)
             lvldown_exp = minexp;
         }
         SetMonData(pokemon, MON_DATA_EXPERIENCE, &lvldown_exp);
-        if (level < 1)
-            return FALSE;
         SetMonData(pokemon, MON_DATA_LEVEL, &level);
         return TRUE;
     }

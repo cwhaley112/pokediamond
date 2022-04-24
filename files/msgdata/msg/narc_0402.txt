@@ -191,7 +191,7 @@ SP. DEF
 SPEED
 + {STRVAR_1 52, 0}
 {STRVAR_1 52, 0}
-{STRVAR_1 1, 0} was elevated to\nLv. {STRVAR_1 52, 1}.{WAIT 4}{WAIT 2}
+{STRVAR_1 1, 0} was decreased to\nLv. {STRVAR_1 52, 1}.{WAIT 4}{WAIT 2}
 {STRVAR_1 1, 0} learned\n{STRVAR_1 6, 1}!{WAIT 4}{WAIT 2}
 The Ball Capsule will be detached.\nWill that be OK?
 It can’t be used when you have\nsomeone with you.
