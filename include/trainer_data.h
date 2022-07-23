@@ -78,6 +78,8 @@ struct BattleSetupStruct
     struct TrainerDataLoaded datas[4];
 };
 
+void switchparties2(struct PlayerParty * party, struct PlayerParty * enemyparty);
+struct PlayerParty* GetOldParty();
 void EnemyTrainerSet_Init(struct BattleSetupStruct * sp0, struct SaveBlock2 * r4, u32 sp4);
 s32 TrainerData_GetAttr(u32 tr_idx, u32 attr_no);
 BOOL TrainerMessageWithIdPairExists(u32 pos, u32 idx, u32 heap_id);

@@ -4836,6 +4836,7 @@
 .extern GetWazaAttr
 .extern WazaGetMaxPp
 .extern GetAttrFromWazaTbl
+.extern switchparties
 .extern EnemyTrainerSet_Init
 .extern TrainerData_GetAttr
 .extern TrainerMessageWithIdPairExists
@@ -4889,6 +4890,7 @@
 .extern ReplacePartySlotWithMon
 .extern SwapSlotsInParty
 .extern CopyPlayerParty
+.extern PartySwitchBack
 .extern PartyHasMon
 .extern SavArray_PlayerParty_get
 .extern SavArray_IsNatDexEnabled

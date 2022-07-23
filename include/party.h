@@ -16,6 +16,7 @@ BOOL RemoveMonFromParty(struct PlayerParty * party, int pos);
 void ReplacePartySlotWithMon(struct PlayerParty * party, int pos, struct Pokemon * pokemon);
 BOOL SwapSlotsInParty(struct PlayerParty * party, int pos1, int pos2);
 void CopyPlayerParty(struct PlayerParty * src, struct PlayerParty * dest);
+void PartySwitchBack(struct PlayerParty * src, struct PlayerParty * dest);
 struct PlayerParty * SavArray_PlayerParty_get(struct SaveBlock2 * ptr);
 
 #endif //POKEDIAMOND_PARTY_H

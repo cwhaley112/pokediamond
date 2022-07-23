@@ -1153,7 +1153,7 @@ _0222DFE4:
 _0222DFEC:
 	ldr r0, [r5, #0x68]
 	ldr r1, [r6, #4]
-	bl CopyPlayerParty
+	bl PartySwitchBack
 	ldr r0, [r5, #0x68]
 	bl FreeToHeap
 	add r1, r6, #0

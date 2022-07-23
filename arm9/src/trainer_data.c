@@ -10,6 +10,66 @@
 
 #pragma thumb on
 
+struct PlayerParty partyold;
+extern int trainerbattle;
+
+struct PlayerParty* GetOldParty() {
+    return &partyold;
+}
+
+void switchparties2(struct PlayerParty * party, struct PlayerParty * enemyparty)
+{
+    // swap teams (single battles only)
+    int playerMons = GetPartyCount(party);
+    int enemyMons = GetPartyCount(enemyparty);
+    // int hp;
+    int i;
+    BOOL decry;
+    u16 otid;
+    // u16 dexNum;
+    // u32 personality;
+    // u16 checksum;
+    struct Pokemon tempMon;
+    // u32 value;
+
+    // s32 teamArray[4] = {0, 1, 2, 3};
+    // s32 oppArray[4] = {0, 4, 1, 4};
+    // s32 oppArray2[4] = {0, 3, 4, 2};
+
+    // why won't this work???
+    otid = GetMonData(&party->mons[0], MON_DATA_OTID, NULL);
+
+    // TODO deal with bad egg shit
+
+    // TODO deal with double battles
+
+    for (i=0; i<6; i++) {
+        struct Pokemon *mon = &party->mons[i];
+        struct Pokemon *mon2 = &enemyparty->mons[i];
+        tempMon = *mon2;
+        *mon2 = *mon;
+        *mon = tempMon;
+
+        // mirror match stuff
+        // *mon = *mon2;
+        // decry = AcquireMonLock(mon);
+        // hp=(int)(mon->party.maxHp*0.5);
+        // SetMonData(mon, MON_DATA_HP, &hp);
+        // ReleaseMonLock(mon, decry);
+        
+        if (i < enemyMons) {
+            //TODO overwrite OT data for my new team (so they obey me)
+            // mon = &party->mons[i];
+            decry = AcquireMonLock(mon);
+            SetMonData(mon, MON_DATA_OTID, &otid);
+            ReleaseMonLock(mon, decry);
+        }
+        // }
+    }
+    party->curCount = enemyMons;
+    enemyparty->curCount = playerMons;
+    // end delta
+}
 
 // Loads all battle opponents, including multi-battle partner if exists.
 void EnemyTrainerSet_Init(struct BattleSetupStruct * enemies, struct SaveBlock2 * sav2, u32 heap_id)
@@ -19,6 +79,7 @@ void EnemyTrainerSet_Init(struct BattleSetupStruct * enemies, struct SaveBlock2 
     u16 * rivalName;
     s32 i;
     struct String * str;
+    u16 otid;
 
     msgData = NewMsgDataFromNarc(1, NARC_MSGDATA_MSG, 559, heap_id);
     rivalName = GetRivalNamePtr(FUN_02024EC0(sav2));
@@ -42,6 +103,9 @@ void EnemyTrainerSet_Init(struct BattleSetupStruct * enemies, struct SaveBlock2 
         }
     }
     enemies->flags |= trdata.data.doubleBattle;
+    trainerbattle=1;
+    partyold = *enemies->parties[0];
+    switchparties2(enemies->parties[0], enemies->parties[1]);
     DestroyMsgData(msgData);
 }
 

@@ -1,9 +1,11 @@
 #include "global.h"
 #include "party.h"
 #include "heap.h"
+#include "trainer_data.h"
 
 #pragma thumb on
 
+int trainerbattle;
 void SavArray_Party_init(struct PlayerParty * party);
 void InitPartyWithMaxSize(struct PlayerParty * party, int count);
 
@@ -107,6 +109,18 @@ BOOL SwapSlotsInParty(struct PlayerParty * party, int pos1, int pos2)
 void CopyPlayerParty(struct PlayerParty * src, struct PlayerParty * dest)
 {
     *dest = *src;
+}
+
+void PartySwitchBack(struct PlayerParty * src, struct PlayerParty * dest)
+{
+    if (trainerbattle==1) {
+        struct PlayerParty * oldparty = GetOldParty();
+        *dest = *oldparty;
+        trainerbattle=0;
+    }
+    else {
+        *dest = *src;
+    }
 }
 
 BOOL PartyHasMon(struct PlayerParty * party, u16 species)
