@@ -3691,7 +3691,7 @@ BOOL FUN_0206A9AC(struct BoxPokemon * boxmon, struct PlayerData * sb2, u32 heap_
     u32 otGender = GetBoxMonData(boxmon, MON_DATA_MET_GENDER, NULL);
     struct String * r7 = PlayerProfile_GetPlayerName_NewString(sb2, heap_id);
     struct String * r6 = String_ctor(OT_NAME_LENGTH + 1, heap_id);
-    BOOL ret = FALSE;
+    BOOL ret = TRUE;
     GetBoxMonData(boxmon, MON_DATA_OT_NAME_2, r6);
     if (myId == otId && myGender == otGender && StringCompare(r7, r6) == 0)
         ret = TRUE;

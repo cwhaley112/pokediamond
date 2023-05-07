@@ -33430,7 +33430,7 @@ _0223F8AE:
 _0223F8C0:
 	add r0, r7, #0
 	bl PlayerProfile_CountBadges
-	cmp r0, #8
+	cmp r0, #0
 	blt _0223F8D0
 	add sp, #0x20
 	mov r0, #0

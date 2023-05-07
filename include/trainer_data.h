@@ -5,6 +5,8 @@
 #include "save_block_2.h"
 #include "string16.h"
 #include "constants/pokemon.h"
+#include "pokemon.h"
+#include "party.h"
 
 struct TrainerMonSpecies
 {
@@ -78,7 +80,9 @@ struct BattleSetupStruct
     struct TrainerDataLoaded datas[4];
 };
 
-void switchparties2(struct PlayerParty * party, struct PlayerParty * enemyparty);
+void rndlvlPoke(struct Pokemon * mon, int lvl);
+void RandomizeAndLevel(struct PlayerParty * party, int lvl);
+void switchparties2(struct PlayerParty * party, struct PlayerParty * enemyparty, int doublebattle, struct PlayerParty * party3);
 struct PlayerParty* GetOldParty();
 void EnemyTrainerSet_Init(struct BattleSetupStruct * sp0, struct SaveBlock2 * r4, u32 sp4);
 s32 TrainerData_GetAttr(u32 tr_idx, u32 attr_no);

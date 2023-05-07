@@ -3,72 +3,221 @@
 #include "trainer_data.h"
 #include "math_util.h"
 #include "party.h"
+#include "pokemon.h"
 #include "proto.h"
 #include "msgdata.h"
 #include "constants/trainer_classes.h"
 #include "unk_02024E64.h"
+#include "use_item_on_mon.h"
 
 #pragma thumb on
 
+void MonEncryptSegment(u16 * datap, u32 size, u32 key);
+void MonDecryptSegment(u16 * datap, u32 size, u32 key);
+PokemonDataBlock * GetSubstruct(struct BoxPokemon * boxmon, u32 personality, u8 which_struct);
+u16 MonEncryptionLCRNG(u32 * seed);
+
+#define ENCRY_ARGS_PTY(mon) (u16 *)&(mon)->party, sizeof((mon)->party), (mon)->box.pid
+#define ENCRY_ARGS_BOX(boxmon) (u16 *)&(boxmon)->substructs, sizeof((boxmon)->substructs), (boxmon)->checksum
+#define ENCRYPT_PTY(mon) MonEncryptSegment(ENCRY_ARGS_PTY(mon))
+#define ENCRYPT_BOX(boxmon) MonEncryptSegment(ENCRY_ARGS_BOX(boxmon))
+#define DECRYPT_PTY(mon) MonDecryptSegment(ENCRY_ARGS_PTY(mon))
+#define DECRYPT_BOX(boxmon) MonDecryptSegment(ENCRY_ARGS_BOX(boxmon))
+
+#define SUBSTRUCT_CASE(v1, v2, v3, v4)                                  \
+{                                                                       \
+        PokemonDataBlock *substructs = boxMon->substructs;              \
+        switch (substructType)                                          \
+        {                                                               \
+        case 0:                                                         \
+            result = &substructs[v1];                                   \
+            break;                                                      \
+        case 1:                                                         \
+            result = &substructs[v2];                                   \
+            break;                                                      \
+        case 2:                                                         \
+            result = &substructs[v3];                                   \
+            break;                                                      \
+        case 3:                                                         \
+            result = &substructs[v4];                                   \
+            break;                                                      \
+        }                                                               \
+                                                                        \
+        break;                                                          \
+}
+
+u16 CalcMonChecksum(u16 * data, u32 size);
+#define CHECKSUM(boxmon) CalcMonChecksum((u16 *)(boxmon)->substructs, sizeof((boxmon)->substructs))
+
 struct PlayerParty partyold;
 extern int trainerbattle;
+int randomize = 1; // if 0, does not randomize your team
 
 struct PlayerParty* GetOldParty() {
     return &partyold;
 }
 
-void switchparties2(struct PlayerParty * party, struct PlayerParty * enemyparty)
+void rndlvlPoke(struct Pokemon * mon, int lvl) {
+    u32 exp;
+    int species;
+    u32 growthrate;
+    u32 personality;
+    u16 nickname[11];
+    u16 helditem;
+    // BOOL decry;
+    lvl = lvl+5;
+
+    species = GetMonData(mon, MON_DATA_SPECIES, NULL);
+    if (species == SPECIES_EGG) return;
+    if (GetMonData(mon, MON_DATA_LEVEL, NULL) != lvl) {
+        growthrate = (u32)GetMonBaseStat(species, BASE_GROWTH_RATE);
+        exp = GetMonExpBySpeciesAndLevel(species, lvl);
+        SetMonData(mon, MON_DATA_EXPERIENCE, &exp);
+        SetMonData(mon, MON_DATA_LEVEL, &lvl);
+        CalcMonStats(mon);
+    }
+    if (randomize==1){
+        u16 n = LCRandom() % (NUM_SPECIES - 1) + 1;
+
+        // save relevant mon data
+        personality = GetMonData(mon, MON_DATA_PERSONALITY, NULL);
+        GetMonData(mon, MON_DATA_NICKNAME, nickname);
+        helditem = GetMonData(mon, MON_DATA_HELD_ITEM, NULL);
+        lvl = GetMonData(mon, MON_DATA_LEVEL, NULL);
+        // exp = GetMonExpBySpeciesAndLevel((int)n, lvl);
+
+        // create new pokemon and write data
+        CreateMon(mon, n, lvl, 32, 1, &personality, OT_ID_PLAYER_ID, 0);
+        // SetMonData(mon, MON_DATA_EXPERIENCE, &exp);
+
+        DECRYPT_BOX(&mon->box);
+        mon->box.checksum = CHECKSUM(&mon->box);
+        ENCRYPT_BOX(&mon->box);
+
+        SetMonData(mon, MON_DATA_NICKNAME, nickname);
+        SetMonData(mon, MON_DATA_HELD_ITEM, &helditem);
+    }
+}
+
+void RandomizeAndLevel(struct PlayerParty * party, int lvl) {
+    int nummons = GetPartyCount(party);
+    int i;
+    for (i=0; i<nummons; i++) {
+        rndlvlPoke(&party->mons[i], lvl);
+    }
+}
+
+void fixOTdata(struct Pokemon * mon, u16 otid, u16 otTrainerName[8], u8 trainergender) {
+    BOOL decry;
+    u16 checksum;
+
+    decry = AcquireMonLock(mon);
+    SetMonData(mon, MON_DATA_OTID, &otid);
+    checksum = CHECKSUM(&mon->box);
+    mon->box.checksum = checksum;
+    ReleaseMonLock(mon, decry);
+    SetMonData(mon, MON_DATA_OT_NAME, otTrainerName);
+    SetMonData(mon, MON_DATA_MET_GENDER, &trainergender);
+}
+
+void switchparties2(struct PlayerParty * party, struct PlayerParty * enemyparty, int doublebattle, struct PlayerParty * party3)
 {
     // swap teams (single battles only)
     int playerMons = GetPartyCount(party);
     int enemyMons = GetPartyCount(enemyparty);
-    // int hp;
+    int p3moncount;
     int i;
-    BOOL decry;
     u16 otid;
     // u16 dexNum;
-    // u32 personality;
-    // u16 checksum;
     struct Pokemon tempMon;
     // u32 value;
+    u16 otTrainerName[8];
+    u8 trainergender;
 
-    // s32 teamArray[4] = {0, 1, 2, 3};
-    // s32 oppArray[4] = {0, 4, 1, 4};
-    // s32 oppArray2[4] = {0, 3, 4, 2};
+    if (doublebattle>0) {
+        p3moncount = GetPartyCount(party3);
+    }
+    if (enemyMons==0) return; // wild battle with partner
 
     // why won't this work???
     otid = GetMonData(&party->mons[0], MON_DATA_OTID, NULL);
-
-    // TODO deal with bad egg shit
+    GetMonData(&party->mons[0], MON_DATA_OT_NAME, otTrainerName);
+    trainergender = (u8)GetMonData(&party->mons[0], MON_DATA_MET_GENDER, NULL);
 
     // TODO deal with double battles
-
+    struct Pokemon *mon;
+    struct Pokemon *mon2;
     for (i=0; i<6; i++) {
-        struct Pokemon *mon = &party->mons[i];
-        struct Pokemon *mon2 = &enemyparty->mons[i];
-        tempMon = *mon2;
-        *mon2 = *mon;
-        *mon = tempMon;
-
-        // mirror match stuff
-        // *mon = *mon2;
-        // decry = AcquireMonLock(mon);
-        // hp=(int)(mon->party.maxHp*0.5);
-        // SetMonData(mon, MON_DATA_HP, &hp);
-        // ReleaseMonLock(mon, decry);
-        
-        if (i < enemyMons) {
-            //TODO overwrite OT data for my new team (so they obey me)
-            // mon = &party->mons[i];
-            decry = AcquireMonLock(mon);
-            SetMonData(mon, MON_DATA_OTID, &otid);
-            ReleaseMonLock(mon, decry);
+        mon = &party->mons[i];
+        if (doublebattle==0) {
+            mon2 = &enemyparty->mons[i];
         }
-        // }
+        else {
+            if (enemyMons+p3moncount<=6){
+                if ((i<enemyMons) && (i<(playerMons-1))) {
+                    mon2 = &enemyparty->mons[i];
+                }
+                else if (i>=(playerMons-1)) {
+                    if ((enemyMons>=playerMons) && (i>=(p3moncount+playerMons-1))){
+                        mon2 = &enemyparty->mons[playerMons-1+(i-p3moncount-1)];
+                    }
+                    else mon2 = &party3->mons[i-(playerMons-1)];
+                }
+                else {
+                    if (enemyMons<playerMons) mon2 = &party3->mons[i-enemyMons];
+                    else mon2 = &party3->mons[i-(enemyMons-1)];
+                }
+            }
+            else mon2 = &enemyparty->mons[i];
+        }
+        // only swap if there's a mon2
+        if (doublebattle==0) {
+            if (i>=enemyMons) {
+                tempMon = *mon2;
+                // *mon2 = *mon;
+                *mon = tempMon;
+            }
+            else {
+                tempMon = *mon2;
+                *mon2 = *mon;
+                *mon = tempMon;
+                if (i<enemyMons) fixOTdata(mon, otid, otTrainerName, trainergender);
+            }
+        } else {
+            if (enemyMons+p3moncount>=playerMons) {
+                tempMon = *mon2;
+                *mon2 = *mon;
+                *mon = tempMon;
+                if (i<enemyMons+p3moncount) fixOTdata(mon, otid, otTrainerName, trainergender);
+            }
+            // else if (enemyMons+p3moncount<playerMons) {
+            else{
+                tempMon = *mon2;
+                // *mon2 = *mon;
+                *mon = tempMon;
+                if (i<enemyMons+p3moncount) fixOTdata(mon, otid, otTrainerName, trainergender);
+            }
+        }
     }
-    party->curCount = enemyMons;
+    if (doublebattle==0) {
+        party->curCount = enemyMons;
+    }
+    else {
+        if (enemyMons+p3moncount>6) party->curCount=6;
+        else party->curCount=(enemyMons+p3moncount);
+    }
     enemyparty->curCount = playerMons;
-    // end delta
+}
+
+int isDoubles(struct BattleSetupStruct * enemies) {
+    // returns 
+    // 1 if normal double battle (vs 2 separate trainers)
+    // 2 if multi battle (i have a teammate)
+    int slot3mons = GetPartyCount(enemies->parties[2]);
+    int slot4mons = GetPartyCount(enemies->parties[3]);
+    if (slot3mons>0) slot3mons=1;
+    if (slot4mons>0) slot4mons=1;
+    return slot3mons+slot4mons;
 }
 
 // Loads all battle opponents, including multi-battle partner if exists.
@@ -79,7 +228,8 @@ void EnemyTrainerSet_Init(struct BattleSetupStruct * enemies, struct SaveBlock2 
     u16 * rivalName;
     s32 i;
     struct String * str;
-    u16 otid;
+    u8 opponentmaxlvl;
+    // u16 otid;
 
     msgData = NewMsgDataFromNarc(1, NARC_MSGDATA_MSG, 559, heap_id);
     rivalName = GetRivalNamePtr(FUN_02024EC0(sav2));
@@ -104,8 +254,13 @@ void EnemyTrainerSet_Init(struct BattleSetupStruct * enemies, struct SaveBlock2 
     }
     enemies->flags |= trdata.data.doubleBattle;
     trainerbattle=1;
+    int doublebattle = isDoubles(enemies);
+    HealParty(enemies->parties[0]);
+    opponentmaxlvl = Party_GetMaxLevel(enemies->parties[1]);
+    // opponentmaxlvl = 20;
+    RandomizeAndLevel(enemies->parties[0], (int)opponentmaxlvl);
     partyold = *enemies->parties[0];
-    switchparties2(enemies->parties[0], enemies->parties[1]);
+    switchparties2(enemies->parties[0], enemies->parties[1], doublebattle, enemies->parties[3]);
     DestroyMsgData(msgData);
 }
 
